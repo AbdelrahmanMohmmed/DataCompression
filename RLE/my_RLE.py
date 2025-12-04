@@ -22,3 +22,5 @@ class RLE:
             ch = text[i+1]
             answer+= ch*num
         return answer
+
+rle_encoder = RLE()
