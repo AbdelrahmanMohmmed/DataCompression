@@ -3,7 +3,7 @@ from pathlib import Path
 from golom.My_golomb import golomb_encode, golomb_decode
 from huffman.My_huffman import my_huffman_encode, my_huffman_decode
 from LZW.My_LZW import lzw_encode, lzw_decode
-from quantizer.scaler_uniform_quantizer import quantize_image
+from quantizer.quantizer_photos import *
 from RLE.my_RLE import rle_encoder
 from arthimatic.My_arthritic import  make_interval
 
@@ -17,9 +17,8 @@ TEXT_METHODS = {
 }
 
 IMAGE_METHODS = {
-    "RLE": rle_encoder.encoder,
-    "Quantizer": quantize_image,
-    "Huffman": my_huffman_encode
+    "Uniform_Quantizer": quantize_image,
+    "NonUniform_Quantizer": nonuniform_quantizer_encode
 }
 
 

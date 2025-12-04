@@ -1,4 +1,3 @@
-import numpy as np
 from PIL import Image
 from scaler_uniform_quantizer import *
 from scaler_nonuniform_quantizer import *
@@ -14,7 +13,7 @@ def load_image_as_matrix(path):
     return matrix, img
 
 
-def quantize_image(image_matrix, bit_size):
+def quantize_image(image_matrix, bit_size=4):
     """
     Apply uniform quantizer to each RGB channel independently.
     Returns encoded image (indices) and decoded (midpoint) image.
@@ -35,7 +34,7 @@ def quantize_image(image_matrix, bit_size):
 
     return encoded_img, decoded_img
 
-def quantize_image_nonuniform(image_matrix, bit_size):
+def quantize_image_nonuniform(image_matrix, bit_size=4):
     encoded_img = np.zeros_like(image_matrix)
     decoded_img = np.zeros_like(image_matrix)
 
