@@ -26,7 +26,7 @@ def golomb_old_encode(N,M):
     rem = '0' * (c - l) + rem
     return quo + rem
 
-def golomb_encode(N,M):
+def golomb_encode(N,M=4):
     q = N // M
     r = N % M
     quo = unary_code(q)
@@ -44,7 +44,7 @@ def golomb_encode(N,M):
     rem = '0' * (b+1 - l) + rem
     return quo + rem
 
-def golomb_my_decode(code, M): #need fix
+def golomb_my_decode(code, M=4): #need fix
     b = math.floor(math.log2(M))
     k = 2 ** (b + 1) - M
     q = 0
@@ -62,7 +62,7 @@ def golomb_my_decode(code, M): #need fix
     r = int(r_bits, 2)
     return n+r
 
-def golomb_decode(code, M):
+def golomb_decode(code, M=4):
     b = math.floor(math.log2(M))
     k = 2 ** (b + 1) - M
     q = 0

@@ -1,6 +1,6 @@
 from PIL import Image
-from scaler_uniform_quantizer import *
-from scaler_nonuniform_quantizer import *
+from quantizer.scaler_uniform_quantizer import *
+from quantizer.scaler_nonuniform_quantizer import *
 
 def load_image_as_matrix(path):
     """
@@ -13,7 +13,7 @@ def load_image_as_matrix(path):
     return matrix, img
 
 
-def quantize_image(image_matrix, bit_size=4):
+def quantize_image(image_matrix, bit_size=2):
     """
     Apply uniform quantizer to each RGB channel independently.
     Returns encoded image (indices) and decoded (midpoint) image.
@@ -34,19 +34,16 @@ def quantize_image(image_matrix, bit_size=4):
 
     return encoded_img, decoded_img
 
-def quantize_image_nonuniform(image_matrix, bit_size=4):
+def quantize_image_nonuniform(image_matrix, bit_size=2):
     encoded_img = np.zeros_like(image_matrix)
     decoded_img = np.zeros_like(image_matrix)
 
     for c in range(3):  # R, G, B
-        channel = image_matrix[:, :, c].flatten()
-
-        # Build table using channel's histogram
-        table = make_nonuniform_table(bit_size, channel)
+        channel = image_matrix[:, :, c]
 
         # Encode & decode
-        encoded_channel = nonuniform_quantizer_encode(image_matrix[:, :, c], table)
-        decoded_channel = nonuniform_quantizer_decode(encoded_channel, table)
+        encoded_channel = nonuniform_quantizer_encode(channel, bit_size)
+        decoded_channel = nonuniform_quantizer_decode(encoded_channel, bit_size,channel)
 
         encoded_img[:, :, c] = encoded_channel
         decoded_img[:, :, c] = decoded_channel

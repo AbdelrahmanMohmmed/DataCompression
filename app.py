@@ -18,7 +18,7 @@ TEXT_METHODS = {
 
 IMAGE_METHODS = {
     "Uniform_Quantizer": quantize_image,
-    "NonUniform_Quantizer": nonuniform_quantizer_encode
+    "NonUniform_Quantizer": quantize_image_nonuniform
 }
 
 
@@ -54,16 +54,18 @@ if uploaded_file:
 
         technique = st.selectbox("Choose Compression Technique", list(IMAGE_METHODS.keys()))
 
-        image_data = uploaded_file.read()
+        # Load using your function
+        image_matrix, pil_image = load_image_as_matrix(uploaded_file)
 
-        st.image(image_data, caption="Uploaded Image", use_container_width=True)
+        st.image(pil_image, caption="Uploaded Image", use_container_width=True)
 
         if st.button("Compress"):
             compress_func = IMAGE_METHODS[technique]
-            result = compress_func(image_data)
+            encode, decode = compress_func(image_matrix)
 
             st.success(f"{technique} compression completed!")
-            st.write("Compressed Output (preview or stats):")
-            st.write(result)
+            st.write("Decoded Image:")
+            st.image(decode.astype("uint8"))
+
     else:
         st.error("Unsupported file format!")
