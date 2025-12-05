@@ -135,5 +135,135 @@ Mean Squared Error (MSE): 776.4444
 
 ---
 
+# 🎨 Non-Uniform (Lloyd-Max) Quantization in Python
+
+## 🔍 Overview
+This project implements **Non-Uniform Scalar Quantization** using an iterative splitting method inspired by the **Lloyd–Max** algorithm.
+
+It includes:
+
+- Automatic centroid generation (non-uniform levels)
+- Adaptive quantization based on sample distribution
+- Encoding & decoding functions
+- Compression Ratio (CR)
+- Mean Squared Error (MSE)
+- Full grayscale image quantization (load → quantize → reconstruct → save)
+
+Supports both **sample vectors** and **grayscale images**.
+
+---
+
+## 🚀 Features
+- Lloyd-Max style non-uniform quantizer  
+- Dynamic centroid updates  
+- Decision boundary computation  
+- Encoding + decoding  
+- MSE and compression ratio  
+- Supports PNG/JPG grayscale quantization  
+- Fully commented and clean Python implementation  
+
+---
+
+## ▶ Full Example Test (Encoding + Decoding + Image Quantization)
+```python
+if __name__ == '__main__':
+    bit_size = 2
+
+    pixels = [6, 15, 17, 60, 100, 90, 66, 59, 18, 3, 5, 16, 14, 67, 63, 2, 98, 92]
+
+    encoded = nonuniform_quantizer_encode(pixels, bit_size, 128)
+    decoded = nonuniform_quantizer_decode(encoded, bit_size, pixels, 128)
+
+    print("Encoded:", encoded)
+    print("Decoded:", decoded)
+    
+    mse = quantization_mse(pixels, decoded)
+    print("MSE:", mse)
+
+    cr = compression_ratio(orig_bit_depth=8, bit_size=bit_size)
+    print("Compression Ratio:", cr)
+
+    print("\n--- IMAGE TEST ---")
+
+    flat_pixels, original_shape = load_color_image_as_flat_gray("icons8-github-480.png")
+
+    encoded_img = nonuniform_quantizer_encode(flat_pixels, bit_size, 256)
+    decoded_img_flat = nonuniform_quantizer_decode(encoded_img, bit_size, flat_pixels, 256)
+
+    mse_img = quantization_mse(flat_pixels, decoded_img_flat)
+    print("Image MSE:", mse_img)
+
+    output_path = "output_quantized.png"
+    save_flat_gray_as_image(decoded_img_flat, original_shape, output_path)
+    print("Quantized image saved to:", output_path)
+```
+
+---
+
+## 🧪 Tests
+
+### ✅ Test 1 — 1D Sample Vector
+Using:
+```python
+bit_size = 2
+pixels = [6, 15, 17, 60, 100, 90, 66, 59, 18, 3, 5, 16, 14, 67, 63, 2, 98, 92]
+
+encoded = nonuniform_quantizer_encode(pixels, bit_size, 128)
+decoded = nonuniform_quantizer_decode(encoded, bit_size, pixels, 128)
+
+mse = quantization_mse(pixels, decoded)
+cr = compression_ratio(8, bit_size)
+```
+
+### ✔ Actual Output:
+```
+Encoded: [0 1 1 2 3 3 2 2 1 0 0 1 1 2 2 0 3 3]
+Decoded: [ 4 16 16 63 95 95 63 63 16  4  4 16 16 63 63  4 95 95]
+MSE: 7.666666666666667
+Compression Ratio: 4.0
+```
+
+---
+
+### ✅ Test 2 — Image Quantization
+Using:
+```python
+flat_pixels, original_shape = load_color_image_as_flat_gray("icons8-github-480.png")
+
+encoded_img = nonuniform_quantizer_encode(flat_pixels, bit_size, 256)
+decoded_img_flat = nonuniform_quantizer_decode(encoded_img, bit_size, flat_pixels, 256)
+
+mse_img = quantization_mse(flat_pixels, decoded_img_flat)
+```
+
+### ✔ Output Format:
+```
+Image MSE: <value depends on image>
+Quantized image saved to: output_quantized.png
+```
+
+---
+
+## 🧠 How Non-Uniform Quantization Works (Summary)
+
+1. Start with **one centroid** equal to the mean of the data.  
+2. Split each centroid (`c - ε`, `c + ε`).  
+3. Assign samples to nearest centroid.  
+4. Update centroid = mean of assigned samples.  
+5. Repeat until `2^bit_size` centroids are formed.  
+6. Create decision boundaries from midpoints.  
+7. Build quantization table.  
+8. Encode by interval, decode by centroid.
+
+---
+
+## ⚠️ Notes
+- Non-uniform quantization reduces error compared to uniform quantization.  
+- Sensitive to input distribution.  
+- Works better on clustered data.  
+- Low bit sizes produce higher distortion.
+
+---
+
 ## 📌 License
 This project is free to use for learning, teaching, and research purposes.
