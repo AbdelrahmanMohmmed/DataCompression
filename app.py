@@ -19,6 +19,15 @@ TEXT_METHODS = {
     "Huffman": my_huffman_encode
 }
 
+TEXT_DECOMP = {
+    "LZW": lzw_decode,
+    "RLE": rle_encoder.decoder,
+    "Arithmetic": make_interval,
+    "Golomb": golomb_decode,
+    "Huffman": my_huffman_decode
+}
+
+
 IMAGE_METHODS = {
     "Uniform_Quantizer": quantize_image,
     "NonUniform_Quantizer": quantize_image_nonuniform
@@ -36,44 +45,88 @@ uploaded_file = st.file_uploader(
 if uploaded_file:
     file_extension = Path(uploaded_file.name).suffix.lower()
 
-    # ---------------------------------------------------
-    #                 TEXT COMPRESSION
-    # ---------------------------------------------------
+# ---------------------------------------------------
+#                 TEXT COMPRESSION / DECOMPRESSION
+# ---------------------------------------------------
     if file_extension == ".txt":
-        st.subheader("Text Compression")
+        st.subheader("Text Compression / Decompression")
 
-        technique = st.selectbox("Choose Compression Technique", list(TEXT_METHODS.keys()))
+        mode = st.radio("Choose Mode", ["Compress", "Decompress"])
 
-        text_data = uploaded_file.read().decode("utf-8")
-        original_size = len(text_data.encode("utf-8"))
+        if mode == "Compress":
 
-        st.write(f" **Original Size:** {original_size} bytes")
+            technique = st.selectbox("Choose Compression Technique", list(TEXT_METHODS.keys()))
 
-        if st.button("Compress"):
-            compress_func = TEXT_METHODS[technique]
-            encoded_text = compress_func(text_data)
+            text_data = uploaded_file.read().decode("utf-8")
+            original_size = len(text_data.encode("utf-8"))
 
-            # encoded size in bytes
-            encoded_size = len(str(encoded_text).encode("utf-8"))
-            ratio = original_size / encoded_size if encoded_size != 0 else 0
+            st.write(f" **Original Size:** {original_size} bytes")
 
-            st.success(f"{technique} compression completed!")
+            if st.button("Compress"):
+                compress_func = TEXT_METHODS[technique]
+                encoded_text = compress_func(text_data)
 
-            st.write("### Encoded Output:")
-            st.code(encoded_text)
+                encoded_size = len(str(encoded_text).encode("utf-8"))
+                ratio = original_size / encoded_size if encoded_size != 0 else 0
 
-            # ---- Sizes ----
-            st.write(f" **Compressed Size:** {encoded_size} bytes")
-            st.write(f" **Compression Ratio:** {ratio:.2f}x smaller")
+                st.success(f"{technique} compression completed!")
 
-            # ---- Download Encoded Text ----
-            st.download_button(
-                label="Download Encoded File",
-                data=str(encoded_text),
-                file_name=f"compressed_{technique}.txt",
-                mime="text/plain"
-            )
+                st.write("### Encoded Output:")
+                st.code(str(encoded_text))
 
+                st.write(f"**Compressed Size:** {encoded_size} bytes")
+                st.write(f"**Compression Ratio:** {ratio:.2f}x smaller")
+
+                st.download_button(
+                    label="Download Encoded File",
+                    data=str(encoded_text),
+                    file_name=f"compressed_{technique}.txt",
+                    mime="text/plain"
+                )
+
+        else:   # -----------------------  DECOMPRESSION -------------------------
+
+            technique = st.selectbox("Choose Compression Technique", list(TEXT_METHODS.keys()))
+
+            st.info("Upload a file containing the encoded text.")
+
+            encoded_data = uploaded_file.read().decode("utf-8")
+
+            if st.button("Decompress"):
+                try:
+                    decode_func = TEXT_DECOMP[technique]
+
+                    # Some formats need eval() if the encoding returns lists/tuples
+                    try:
+                        encoded_data_eval = eval(encoded_data)
+                    except:
+                        encoded_data_eval = encoded_data
+
+                    decoded_text = decode_func(encoded_data_eval)
+
+                    decompressed_size = len(decoded_text.encode("utf-8"))
+
+                    st.success(f"{technique} decompression completed!")
+
+                    st.write("### Decoded Output:")
+                    st.text_area("Decoded Text", decoded_text, height=200)
+
+                    st.write(f"**Decompressed Size:** {decompressed_size} bytes")
+
+                    st.download_button(
+                        label="Download Decoded Text",
+                        data=decoded_text,
+                        file_name=f"decompressed_{technique}.txt",
+                        mime="text/plain"
+                    )
+
+                except Exception as e:
+                    st.error(f"Error during decompression: {e}")
+
+
+
+
+  
     # ---------------------------------------------------
     #               IMAGE COMPRESSION
     # ---------------------------------------------------
