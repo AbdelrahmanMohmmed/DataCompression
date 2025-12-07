@@ -116,6 +116,7 @@ def golomb_encode_file(content, M=4):
     is_numeric = stripped.replace(" ", "").replace("\n", "").isdigit()
     if is_numeric:
         numbers = list(map(int, stripped.split()))
+        nums_to_encode = []  # always define it
 
         # Check if safe for normal numeric Golomb
         max_n = max(numbers)
@@ -131,6 +132,7 @@ def golomb_encode_file(content, M=4):
         # Text file → convert to ASCII
         numbers = [ord(c) for c in content]
         data_type = "text"
+        nums_to_encode = [ord(c) for c in content]  # <-- THIS WAS MISSING
 
     # Encode all numbers
     encoded_bits = "".join(golomb_encode(n, M) for n in nums_to_encode)
@@ -139,7 +141,7 @@ def golomb_encode_file(content, M=4):
 
 
 # ---------- HIGH LEVEL DECODE ----------
-def golomb_decode_file(file_content):
+def golomb_decode_file(file_content,M):
     data_type, M, bitstream = load_golomb_from_string(file_content)
 
     decoded_numbers = []
