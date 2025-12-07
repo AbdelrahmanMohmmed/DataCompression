@@ -89,3 +89,88 @@ def golomb_decode(code, M=4):
         i += (b + 1)
 
     return q * M + r
+
+
+# advanced
+def save_golomb_to_string(data_type, M, payload):
+    """
+    data_type: 'numbers' or 'text'
+    payload: encoded string
+    """
+    return f"{data_type}|M={M}\n===DATA===\n{payload}"
+
+
+def load_golomb_from_string(file_content):
+    header, data = file_content.split("\n===DATA===\n")
+    parts = header.split("|")
+    data_type = parts[0]
+    M = int(parts[1].split("=")[1])
+    return data_type, M, data
+
+
+# ---------- HIGH LEVEL ENCODE ----------
+def golomb_encode_file(content, M=4):
+    # Detect if file is numbers or text
+    stripped = content.strip()
+
+    is_numeric = stripped.replace(" ", "").replace("\n", "").isdigit()
+    if is_numeric:
+        numbers = list(map(int, stripped.split()))
+
+        # Check if safe for normal numeric Golomb
+        max_n = max(numbers)
+        if max_n // M < 10_000:
+            data_type = "numbers"
+            nums_to_encode = numbers
+        else:
+            # Too large → fall back to text mode
+            data_type = "text"
+            nums_to_encode = [ord(c) for c in content]
+
+    else:
+        # Text file → convert to ASCII
+        numbers = [ord(c) for c in content]
+        data_type = "text"
+
+    # Encode all numbers
+    encoded_bits = "".join(golomb_encode(n, M) for n in nums_to_encode)
+
+    return save_golomb_to_string(data_type, M, encoded_bits)
+
+
+# ---------- HIGH LEVEL DECODE ----------
+def golomb_decode_file(file_content):
+    data_type, M, bitstream = load_golomb_from_string(file_content)
+
+    decoded_numbers = []
+    i = 0
+
+    while i < len(bitstream):
+        # decode ONE value
+        b = math.floor(math.log2(M))
+        k = 2 ** (b + 1) - M
+
+        # read unary
+        q = 0
+        while i < len(bitstream) and bitstream[i] == "1":
+            q += 1
+            i += 1
+        i += 1  # skip '0'
+
+        # remainder
+        r_bits = bitstream[i:i+b]
+        r = int(r_bits, 2)
+
+        if r < k:
+            i += b
+        else:
+            r_bits = bitstream[i:i + b + 1]
+            r = int(r_bits, 2) - k
+            i += (b + 1)
+
+        decoded_numbers.append(q * M + r)
+
+    if data_type == "text":
+        return "".join(chr(n) for n in decoded_numbers)
+    else:
+        return " ".join(map(str, decoded_numbers))

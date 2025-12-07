@@ -1,3 +1,5 @@
+import json
+
 def lzw_encode(text):
     # Initialize dictionary with single characters
     dictionary = {chr(i): i for i in range(256)}
@@ -44,3 +46,16 @@ def lzw_decode(code):
         prev = cur
 
     return result
+
+#extra functions
+
+
+def lzw_encode_file(text):
+    """Encode text and serialize to string"""
+    encoded_list = lzw_encode(text)
+    return json.dumps(encoded_list)
+
+def lzw_decode_file(file_content):
+    """Deserialize and decode"""
+    encoded_list = json.loads(file_content)
+    return lzw_decode(encoded_list)

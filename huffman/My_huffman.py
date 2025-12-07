@@ -50,16 +50,44 @@ def my_huffman_encode(text):
     return encode , AdjHeap
 
 def my_huffman_decode(encode:str,tree:dict):
-    pass
+    reverse_tree = {v: k for k, v in tree.items()}
+
+    decoded_text = ""
+    current_code = ""
+
+    for bit in encode:
+        current_code += bit
+
+        # If current_code matches a Huffman code, decode it
+        if current_code in reverse_tree:
+            decoded_text += reverse_tree[current_code]
+            current_code = ""
+
+    return decoded_text
+
+#helper functions
+def save_huffman_to_string(code_map, encoded_data):
+    return f"{code_map}\n===DATA===\n{encoded_data}"
+
+def load_huffman_from_string(file_content):
+    header, data = file_content.split("\n===DATA===\n")
+    code_map = eval(header)  # safe if only your code writes files
+    return code_map, data
+
+def huffman_encode_with_tree(text):
+    encoded_data, code_map = my_huffman_encode(text)
+    return save_huffman_to_string(code_map, encoded_data)
+
+def huffman_decode_with_tree(file_content):
+    code_map, encoded_data = load_huffman_from_string(file_content)
+    return my_huffman_decode(encoded_data, code_map)
 
 if __name__ == '__main__':
     text1 =  'BCAADDDCCACACAC'
-    length = len(text1)
-    text2 = "aabbbbccde"
-    prob = frequency_character(text1)
-    # print(prob)
-    heap = converter(prob)
-    # print(heap)
-    AdjHeap = huffman(heap,length)
-    print(AdjHeap)
+    text2 = "hello world"
+    encode , tree = my_huffman_encode(text2)
+    print(encode)
+    print(my_huffman_decode(encode,tree))
+
+
 

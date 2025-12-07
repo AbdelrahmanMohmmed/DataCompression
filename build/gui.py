@@ -2,9 +2,38 @@ from pathlib import Path
 from tkinter import Tk, Canvas, Entry, Text, Button, PhotoImage, OptionMenu, StringVar
 from tkinter.filedialog import askopenfilename
 from PIL import Image, ImageTk
+import sys
+from tkinter.filedialog import asksaveasfilename
+
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+sys.path.append(str(PROJECT_ROOT))
+
+from golom.My_golomb import golomb_encode_file, golomb_decode_file
+from huffman.My_huffman import huffman_encode_with_tree, huffman_decode_with_tree
+from LZW.My_LZW import lzw_encode, lzw_decode_file
+from RLE.my_RLE import *
+from quantizer.quantizer_photos import quantize_image, quantize_image_nonuniform
+
 
 OUTPUT_PATH = Path(__file__).parent
 ASSETS_PATH = OUTPUT_PATH / Path(r"K:\programing\python\compression\Project\build\assets\frame0")
+rle = RLE()
+
+
+TEXT_METHODS = {
+    "Huffman": (huffman_encode_with_tree, huffman_decode_with_tree),
+    "LZW": (lzw_encode, lzw_decode_file),
+    "Golomb": (golomb_encode_file, golomb_decode_file),
+    "RLE":(rle.encoder,rle.decoder)
+}
+
+IMAGE_METHODS = {
+    "Uniform Quantizer": quantize_image,
+    "Nonuniform Quantizer": quantize_image_nonuniform
+}
+
+selected_file = None
+
 
 def relative_to_assets(path: str) -> Path:
     return ASSETS_PATH / Path(path)
@@ -61,7 +90,7 @@ def activate_dropdowns():
     # Hide original button_3
     button_3.place_forget()
     # Replace with OptionMenu (4 choices)
-    choices_3 = ["Huffman", "LZW", "Arithmetic Coding", "Golomb"]
+    choices_3 = ["Huffman", "LZW", "RLE", "Golomb"]
     dropdown3 = OptionMenu(window, choice3_var, *choices_3)
     dropdown3.place(x=137, y=139, width=133, height=36)
 
@@ -92,7 +121,7 @@ def toggle_dropdown3():
         new_choices = ["Uniform Quantizer", "Nonuniform Quantizer"]
         is_four_choices = False
     else:
-        new_choices = ["Huffman", "LZW", "Arithmetic Coding", "Golomb"]
+        new_choices = ["Huffman", "LZW", "RLE", "Golomb"]
         is_four_choices = True
 
     # Create new dropdown
@@ -100,15 +129,94 @@ def toggle_dropdown3():
     dropdown3.place(x=137, y=139, width=133, height=36)
 
 
-# -------------------------------------------------
 # Function: When button_5 is clicked
-# -------------------------------------------------
 def upload_file():
-    file_path = askopenfilename()
+    global selected_file
+    file_path = askopenfilename(filetypes=[("All files", "*.txt *.png *.jpg *.jpeg")])
     if file_path:
+        selected_file = file_path
         print("User selected:", file_path)
     else:
         print("No file selected")
+
+#save file
+def save_output_file(data, default_name):
+    file_path = asksaveasfilename(
+        defaultextension=".txt",
+        initialfile=default_name,
+        filetypes=[("Text files", "*.txt"), ("All files", "*.*")]
+    )
+    if file_path:
+        with open(file_path, "w", encoding="utf-8") as f:
+            f.write(str(data))
+        print("Saved to:", file_path)
+
+
+#Compression
+def run_compression():
+    if selected_file is None:
+        print("No file selected!")
+        return
+
+    method = choice3_var.get()
+    mode = choice4_var.get()
+
+    if method == "Select method" or mode == "Select mode":
+        print("Please select method and mode")
+        return
+
+    file_ext = Path(selected_file).suffix.lower()
+
+    # -------- TEXT FILE --------
+    if file_ext == ".txt":
+        if method not in TEXT_METHODS:
+            print("Invalid method for text files")
+            return
+
+        encode_func, decode_func = TEXT_METHODS[method]
+
+        with open(selected_file, "r", encoding="utf-8") as f:
+            text = f.read()
+
+        if mode == "Encode":
+            result = encode_func(text)
+            print("Encoded Text:\n", result)
+            save_output_file(result, f"encoded_{method}.txt")
+
+
+        elif mode == "Decode":
+            result = decode_func(text)
+            print("Decoded Text:\n", result)
+            save_output_file(result, f"decoded_{method}.txt")
+
+    # -------- IMAGE FILE --------
+    elif file_ext in [".png", ".jpg", ".jpeg"]:
+        if method not in IMAGE_METHODS:
+            print("Invalid method for image files")
+            return
+
+        compress_func = IMAGE_METHODS[method]
+
+        from PIL import Image
+        import numpy as np
+
+        img = Image.open(selected_file).convert("L")
+        img_np = np.array(img)
+
+        encoded, decoded = compress_func(img_np)
+        print("Image compressed successfully")
+        save_path = asksaveasfilename(
+            defaultextension=".png",
+            initialfile=f"compressed_{method}.png",
+            filetypes=[("PNG files", "*.png"), ("All files", "*.*")]
+        )
+
+        if save_path:
+            Image.fromarray(decoded.astype("uint8")).save(save_path)
+            print("Image saved to:", save_path)
+
+    else:
+        print("Unsupported file format!")
 
 
 # -------------------------------------------------
@@ -176,7 +284,7 @@ button_6 = Button(
     image=button_image_6,
     borderwidth=0,
     highlightthickness=0,
-    command=lambda: print("button_6 clicked"),
+    command=run_compression,
     relief="flat"
 )
 button_6.place(x=137, y=437, width=133, height=36)
