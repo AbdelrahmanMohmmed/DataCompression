@@ -1,7 +1,7 @@
 import streamlit as st
 from pathlib import Path
-from golom.My_golomb import golomb_encode, golomb_decode
-from huffman.My_huffman import my_huffman_encode, my_huffman_decode
+from golom.My_golomb import golomb_encode_file, golomb_decode_file
+from huffman.My_huffman import huffman_encode_with_tree, huffman_decode_with_tree
 from LZW.My_LZW import lzw_encode, lzw_decode
 from quantizer.quantizer_photos import *
 from RLE.my_RLE import rle_encoder
@@ -15,16 +15,16 @@ TEXT_METHODS = {
     "LZW": lzw_encode,
     "RLE": rle_encoder.encoder,
     "Arithmetic": make_interval,
-    "Golomb": golomb_encode,
-    "Huffman": my_huffman_encode
+    "Golomb": golomb_encode_file,
+    "Huffman": huffman_encode_with_tree
 }
 
 TEXT_DECOMP = {
     "LZW": lzw_decode,
     "RLE": rle_encoder.decoder,
     "Arithmetic": make_interval,
-    "Golomb": golomb_decode,
-    "Huffman": my_huffman_decode
+    "Golomb": golomb_decode_file,
+    "Huffman": huffman_decode_with_tree
 }
 
 

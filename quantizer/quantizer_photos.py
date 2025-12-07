@@ -34,7 +34,7 @@ def quantize_image(image_matrix, bit_size=2):
 
     return encoded_img, decoded_img
 
-def quantize_image_nonuniform(image_matrix, bit_size=2):
+def quantize_image_nonuniform(image_matrix, bit_size=5):
     encoded_img = np.zeros_like(image_matrix)
     decoded_img = np.zeros_like(image_matrix)
 
@@ -57,3 +57,23 @@ def save_image(matrix, output_path):
     """
     img = Image.fromarray(matrix.astype(np.uint8))
     img.save(output_path)
+
+def quantization_mse(original, reconstructed):
+    """
+    Compute Mean Squared Error between original and reconstructed signals.
+    """
+    original = np.array(original, dtype=float)
+    reconstructed = np.array(reconstructed, dtype=float)
+
+    if original.shape != reconstructed.shape:
+        raise ValueError("original and reconstructed must have the same shape")
+
+    mse = np.mean((original - reconstructed) ** 2)
+    return mse
+
+
+# -----------------
+# Compression Ratio
+# -----------------
+def compression_ratio(orig_bit_depth, bit_size):
+    return orig_bit_depth / bit_size

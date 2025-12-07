@@ -1,23 +1,55 @@
 import numpy as np
+def make_nonuniform_table(bit_size, data, full_scale=256, epsilon=1.0):
 
-def make_nonuniform_table(bit_size, data, full_scale=128):#need fix
-    data = np.array(data).flatten()
-    data = np.clip(data, 0, full_scale - 1)
+    x = np.array(data, dtype=float).flatten()
+    x = np.clip(x, 0, full_scale - 1)
 
-    sorted_data = np.sort(data)
-    num_steps = 2 ** bit_size
+    L = 2 ** bit_size          # number of levels
 
-    groups = np.array_split(sorted_data, num_steps)
+    # 1) Start with one centroid = global average
+    centroids = np.array([x.mean()], dtype=float)
 
+    # 2) Splitting until we reach L centroids
+    while len(centroids) < L:
+        new_centroids = []
+        for c in centroids:
+            new_centroids.append(c - epsilon)
+            new_centroids.append(c + epsilon)
+
+        centroids = np.array(new_centroids, dtype=float)
+
+        # Associate
+        distances = np.abs(x[:, None] - centroids[None, :])
+        labels = np.argmin(distances, axis=1)
+
+        # Average
+        for k in range(len(centroids)):
+            cluster_points = x[labels == k]
+            if len(cluster_points) > 0:
+                centroids[k] = cluster_points.mean()
+
+    # 3) Sort centroids
+    centroids = np.sort(centroids)
+    L = len(centroids)
+
+    # 4) Decision boundaries = midpoints between centroids
+    boundaries = np.zeros(L + 1, dtype=float)
+    boundaries[0] = 0.0
+    boundaries[-1] = float(full_scale)
+
+    for i in range(1, L):
+        boundaries[i] = 0.5 * (centroids[i - 1] + centroids[i])
+
+    # 5) Build table
     table = {}
-
-    for i, group in enumerate(groups):
-        low = int(group.min()) if i > 0 else 0
-        high = int(group.max()) if i < num_steps-1 else full_scale - 1
-        centroid = int(group.mean())
-        table[(low, high)] = (i, centroid)
+    for i in range(L):
+        low = int(np.floor(boundaries[i]))
+        high = int(np.floor(boundaries[i + 1])) if i < L - 1 else int(full_scale)
+        q_inv = int(np.round(centroids[i]))
+        table[(low, high)] = (i, q_inv)
 
     return table
+
 
 
 

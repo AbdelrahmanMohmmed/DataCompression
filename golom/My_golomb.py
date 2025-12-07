@@ -141,7 +141,7 @@ def golomb_encode_file(content, M=4):
 
 
 # ---------- HIGH LEVEL DECODE ----------
-def golomb_decode_file(file_content,M):
+def golomb_decode_file(file_content,M=4):
     data_type, M, bitstream = load_golomb_from_string(file_content)
 
     decoded_numbers = []

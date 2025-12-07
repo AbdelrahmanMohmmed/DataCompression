@@ -11,8 +11,7 @@ from golom.My_golomb import golomb_encode_file, golomb_decode_file
 from huffman.My_huffman import huffman_encode_with_tree, huffman_decode_with_tree
 from LZW.My_LZW import lzw_encode, lzw_decode_file
 from RLE.my_RLE import *
-from quantizer.quantizer_photos import quantize_image, quantize_image_nonuniform
-
+from quantizer.quantizer_photos import quantize_image, quantize_image_nonuniform,quantization_mse,compression_ratio
 OUTPUT_PATH = Path(__file__).parent
 ASSETS_PATH = OUTPUT_PATH / Path(r"K:\programing\python\compression\Project\build\assets\frame0")
 rle = RLE()
@@ -173,6 +172,25 @@ def save_output_file(data, default_name):
             f.write(str(data))
         print("Saved to:", file_path)
 
+#show ratio
+def show_results_window(method, compression_type, ratio, mse=None):
+    result_win = Tk()
+    result_win.title("Compression Results")
+    result_win.geometry("300x200")
+    result_win.configure(bg="#f2f2f2")
+    result_win.resizable(False, False)
+
+    Label(result_win, text="Compression Results", font=("Arial", 14, "bold"), bg="#f2f2f2").pack(pady=10)
+
+    Label(result_win, text=f"Method: {method}", font=("Arial", 10), bg="#f2f2f2").pack(pady=5)
+    Label(result_win, text=f"Type: {compression_type}", font=("Arial", 10), bg="#f2f2f2").pack(pady=5)
+    Label(result_win, text=f"Compression Ratio: {ratio:.2f}:1", font=("Arial", 10), bg="#f2f2f2").pack(pady=5)
+
+    if mse is not None:
+        Label(result_win, text=f"MSE: {mse:.4f}", font=("Arial", 10), bg="#f2f2f2").pack(pady=5)
+
+    Button(result_win, text="Close", command=result_win.destroy).pack(pady=15)
+
 # -------------------------------------------------
 # Function: Run compression
 # -------------------------------------------------
@@ -213,7 +231,13 @@ def run_compression():
         # Encode
         if mode == "Encode":
             result = encode_func(text, **kwargs) if kwargs else encode_func(text)
+            orig_bits = len(text) * 8
+            compressed_bits = len(result) * 8
+            ratio = orig_bits / compressed_bits if compressed_bits != 0 else 0
+
+            print(f"Compression Ratio: {ratio:.2f}")
             print("Encoded Text:\n", result)
+            show_results_window(method, 'Lossless', ratio)
             save_output_file(result, f"encoded_{method}.txt")
 
         # Decode
@@ -232,7 +256,7 @@ def run_compression():
 
         import numpy as np
 
-        img = Image.open(selected_file).convert("L")
+        img = Image.open(selected_file).convert("RGB")
         img_np = np.array(img)
 
         if method in ["Uniform Quantizer", "Nonuniform Quantizer"]:
@@ -244,6 +268,14 @@ def run_compression():
         else:
             encoded, decoded = compress_func(img_np)
 
+        orig_bit_depth = 8  # original grayscale/RGB
+        bit_size = quantizer_bits_var.get()
+        mse = quantization_mse(img_np, decoded)
+        ratio = compression_ratio(orig_bit_depth, bit_size)
+
+        print(f"Compression Ratio: {ratio:.2f}:1")
+        print(f"MSE (Reconstruction Error): {mse:.4f}")
+        show_results_window(method, 'lossy', ratio, mse)
         print("Image compressed successfully")
         save_path = asksaveasfilename(
             defaultextension=".png",
